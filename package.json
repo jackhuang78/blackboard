@@ -1,0 +1,27 @@
+{
+  "name": "blackboard",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "watch": "supervisor -w 'src/back' -n exit src/back/app.js & watchify src/front/main.js -o build/bundle.js -v -d",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jack Huang",
+  "license": "ISC",
+  "dependencies": {
+    "bootstrap": "^3.3.5",
+    "express": "^4.13.1",
+    "jquery": "^2.1.4",
+    "reactify": "^1.1.1"
+  },
+  "browserify": {
+    "transform": [
+      "reactify"
+    ]
+  },
+  "jshintConfig": {
+    "eqnull": true,
+    "laxbreak": true
+  }
+}
