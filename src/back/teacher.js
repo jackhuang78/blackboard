@@ -5,8 +5,13 @@ var model = require('./model');
 var router = express.Router();
 
 router.get('/', function(req, res) {
-	console.log('teacher/')
+	
 	res.render('main', {react: 'TeacherDashboard'});
+});
+
+router.get('/students', function(req, res) {
+	
+	res.render('main', {react: 'StudentManagement'});
 });
 
 router.get('/getClasses', function(req, res) {
@@ -48,9 +53,11 @@ router.post('/deleteClass/:_id', function(req, res) {
 	})
 });
 
-router.get('/getAssignments/:_classId', function(req, res) {
-	model.Assignment.find({class: req.params._classId}).then(function(data) {
+router.get('/getAssignments/', function(req, res) {
+	model.Assignment.find({class: req.query.classId}).then(function(data) {
 		// TODO conver dates to mm/dd/yyyy
+		
+
 		return res.json(data);
 	}, function(err) {
 		return res.status(500).json(err);
@@ -59,8 +66,6 @@ router.get('/getAssignments/:_classId', function(req, res) {
 
 router.post('/upsertAssignment/', function(req, res) {
 	
-	
-
 	console.log('update Assignment', req.body);
 
 	if(req.body._id) {
@@ -89,17 +94,24 @@ router.post('/deleteAssignment/:_id', function(req, res) {
 
 // students
 
-router.get('/getStudents/:_classId', function(req, res) {
-	model.User.find({enrolls: req.params._classId, role: 'student'}).then(function(data) {
-		return res.json(data);
+router.get('/getStudents', function(req, res) {
+	model.Class.find({instructor: req.cookies.user._id}).then(function(classes) {
+		var classIds = classes.map(function(cls) {
+			return cls._id;
+		});
+
+		model.User.find({role: 'student', enrolls: {$in: classIds}}).then(function(students) {
+			return res.json(students);
+		}, function(err) {
+			return res.status(500).json(err);
+		});
+
 	}, function(err) {
 		return res.status(500).json(err);
 	});
 });
 
 router.post('/upsertStudent/', function(req, res) {
-	
-	console.log('update Student', req.body);
 
 	if(req.body._id) {
 		model.User.findByIdAndUpdate(req.body._id, req.body, {upsert: true}).then(function(data) {
@@ -117,6 +129,8 @@ router.post('/upsertStudent/', function(req, res) {
 			return res.status(500).json(err);
 		});
 	}
+
+	
 });
 
 router.post('/deleteStudent/:_id', function(req, res) {

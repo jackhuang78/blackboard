@@ -4,139 +4,197 @@ var $cookie = require('jquery.cookie');
 
 var DatePicker = require('react-datepicker');
 
-var ReactBsTable = require("react-bootstrap-table");
-var BootstrapTable = ReactBsTable.BootstrapTable;
-var TableHeaderColumn = ReactBsTable.TableHeaderColumn;
-var TableDataSet = ReactBsTable.TableDataSet;
-var dateFormat = require('dateformat');
+var moment = require('moment');
 
 var say = require('./say');
+
+var Header = require('./Header');
 
 
 
 
 var TeacherDashboard = React.createClass({
-
-	classTableData: new TableDataSet([]),
-	selectedClassRow: null,
-
-	assignmentTableData: new TableDataSet([]),
-	selectedAssignmentRow: null,
-
-	studentTableData: new TableDataSet([]),
-	selectedStudentRow: null,
+	selectedClassId: null,
+	selectedAssignId: null,
 
 	render: function() {
+			
 
-		var selectRowProp = {
-			mode: "radio",
-			clickToSelect: true,
-			bgColor: "rgb(238, 193, 213)",
-			onSelect: this.onRowSelect
-		};
+		var selectClass = function(event) {
+			this.selectedClassId = event.target.value;
+			this.refreshAssignments();
+		}.bind(this);
 
-		var cellEditProp = {
-			mode: "click",
-			blurToSave: true,
-			afterSaveCell: this.onRowEdited
-		};
+		var nameChanged = function(event) {
+			this.upsertClass({
+				_id: event.target.dataset.id,
+				name: event.target.innerText
+			});
+		}.bind(this);
 
-		var selectAssignmentRowProp = {
-			mode: "radio",
-			clickToSelect: true,
-			bgColor: "rgb(238, 193, 213)",
-			onSelect: this.onAssignmentRowSelect
-		};
+		var onNewClass = function(event) {
+			this.upsertClass({
+				name: 'New Class'
+			});
+		}.bind(this);
 
-		var assignmentCellEditProp = {
-			mode: "click",
-			blurToSave: true,
-			afterSaveCell: this.onAssignmentCellEdited
-		};
+		var onDeleteClass = function(event) {
+			$.ajax({
+				url: '/teacher/deleteClass/' + event.target.dataset.id,
+				type: 'POST'
+			}).fail(function(err) {
+				say.error(err);
+			}).done(function(data) {
+				this.refreshClasses();
+			}.bind(this));
+		}.bind(this);
 
-		function dateFormatter(cell, row) {
-			console.log(cell, typeof(cell));
-			return (<DatePicker></DatePicker>);
+		var selectAssignment = function(event) {
+			this.selectedAssignId = event.target.value;
+		}.bind(this);
 
-			//return '<input>abc</input>'//dateFormat(cell, 'yyyy/mm/dd');
-		}
+		var titleChanged = function(event) {
+			//console.log(event);
+			//console.log(event.target);
+			console.log(event.target.dataset.id, event.target.value, event.target.innerText)
+			//if(event.charCode == 13 && !event.shiftKey) {
+				this.updateAssignments({
+					_id: event.target.dataset.id,
+					title: event.target.innerText
+				});
+			//}
+		}.bind(this);
 
-		function activeFormatter(cell, row) {
-			return cell ? 'Active' : 'Inactive';
-		}
+		var descChanged = function(event) {
+			//if(event.charCode == 13 && !event.shiftKey) {
+				this.updateAssignments({
+					_id: event.target.dataset.id,
+					description: event.target.innerText
+				});
+			//}
+		}.bind(this);
 
-		var selectStudentRowProp = {
-			mode: "radio",
-			clickToSelect: true,
-			bgColor: "rgb(238, 193, 213)",
-			onSelect: this.onStudentRowSelect
-		};
+		var assignmentDueChanged = function(_id, date) {
+			this.updateAssignments({
+				_id: _id,
+				due: date
+			})
+		}.bind(this);
 
-		var studentCellEditProp = {
-			mode: "click",
-			blurToSave: true,
-			afterSaveCell: this.onStudentCellEdited
-		};
+		var assignmentActiveChanged = function(event) {
+			this.updateAssignments({
+				_id: event.target.dataset.id,
+				active: event.target.checked
+			});
+		}.bind(this);
 
+		var onNewAssignment = function(event) {
+			this.updateAssignments({
+				title: 'New Assignment',
+				class: this.selectedClassId,
+				due: moment().format()
+			});
+		}.bind(this);
+
+		var onDeleteAssignment = function(event) {
+			$.ajax({
+				url: '/teacher/deleteAssignment/' + event.target.dataset.id,
+				type: 'POST'
+			}).fail(function(err) {
+				say.error(err);
+			}).done(function(data) {
+				this.refreshAssignments();
+			}.bind(this));
+		}.bind(this);
 
 		return (
 			<div>
-				<Header title='TeacherDashboard' />
+				<Header title='TeacherDashboard'/>
+				<div>
 				<div className='row'>
-					<div className='col-md-3'>
-						<h2>Classes</h2>				
+					<div className='col-md-1' />
+					<div className='col-md-2'>
 						<div className='form-group'>
-							<button type='button' className='btn btn-success' onClick={this.onCreateClick}>Create</button>
-							<button type='button' className='btn btn-danger' onClick={this.onDeleteClick}>Delete</button>
+							<h2>Class</h2>
+							<table className='table table-hover table-striped table-condensed'>
+								<thead>
+									<tr>
+										<th></th>
+										<th></th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody> 
+									{
+										this.state.classes.map(function(cls) {
+											return (
+												<tr>
+													<td><input type='radio' name='selectedClass' value={cls._id} onChange={selectClass}></input></td>
+													<td data-id={cls._id} contentEditable={true} onBlur={nameChanged} >{cls.name}</td>
+													<td><button data-id={cls._id} type='button' className='btn btn-danger btn-xs' onClick={onDeleteClass}>X</button></td>
+												</tr>
+											);
+										})
+									}
+								</tbody>
+							</table>
+							<button type='button' className='btn btn-success' onClick={onNewClass}>+</button>
+							
 						</div>
-						<BootstrapTable data={this.classTableData} striped={true} hover={true} condensed={true} clickToSelect={true} selectRow={selectRowProp} cellEdit={cellEditProp}>
-							<TableHeaderColumn hidden={true} isKey={true} dataField="_id">Product ID</TableHeaderColumn>
-							<TableHeaderColumn dataField="name">Name</TableHeaderColumn>
-		  			</BootstrapTable>
-		  		</div>
-					<div className='col-md-6'>
-						<div className='row'>
-			  			<h2>Assignments</h2>				
-			  			<div className='form-group'>
-								<button type='button' className='btn btn-success' onClick={this.onCreateAssignmentClick}>Create</button>
-								<button type='button' className='btn btn-danger' onClick={this.onDeleteAssignmentClick}>Delete</button>
-							</div>
-			  			<BootstrapTable data={this.assignmentTableData} height={120} striped={true} hover={true} condensed={true} clickToSelect={true} selectRow={selectAssignmentRowProp} cellEdit={assignmentCellEditProp}>
-								<TableHeaderColumn hidden={true} isKey={true} dataField="_id">ID</TableHeaderColumn>
-								<TableHeaderColumn dataField="title">Title</TableHeaderColumn>
-								<TableHeaderColumn dataField="description">Description</TableHeaderColumn>
-								<TableHeaderColumn dataField="due" dataFormat={dateFormatter}>Due</TableHeaderColumn>
-								<TableHeaderColumn dataField="active" dataFormat={activeFormatter} editable={false}>Active</TableHeaderColumn>
-			  			</BootstrapTable>
-		  			</div>
-		  			<div className='row'>
-			  			<h2>Students</h2>				
-			  			<div className='form-group'>
-								<button type='button' className='btn btn-success' onClick={this.onCreateStudentClick}>Create</button>
-								<button type='button' className='btn btn-danger' onClick={this.onDeleteStudentClick}>Delete</button>
-							</div>
-			  			<BootstrapTable data={this.studentTableData} striped={true} hover={true} condensed={true} clickToSelect={true} selectRow={selectStudentRowProp} cellEdit={studentCellEditProp}>
-								<TableHeaderColumn hidden={true} isKey={true} dataField="_id">ID</TableHeaderColumn>
-								<TableHeaderColumn dataField="name">Name</TableHeaderColumn>
-								<TableHeaderColumn dataField="username">Username</TableHeaderColumn>
-			  			</BootstrapTable>
-		  			</div>
-		  		</div>
-		  	</div>
+					</div>
+
+
+					<div className='col-md-8'>
+						<div className='form-group'>
+							<h2>Assignments</h2>
+							<table className='table table-hover table-striped table-condensed'>
+								<thead>
+									<tr>
+										<th>Title</th>
+										<th>Description</th>
+										<th>Due</th>
+										<th>Active</th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody> 
+									{
+										this.state.assignments.map(function(assignment) {
+											
+											return (
+												<tr>
+													<td data-id={assignment._id} contentEditable={true} onBlur={titleChanged} >{assignment.title}</td>
+													<td data-id={assignment._id} contentEditable={true} onBlur={descChanged} >{assignment.description}</td>
+													<td><DateCell _id={assignment._id} date={assignment.due} onChange={assignmentDueChanged} /></td>	
+													<td><input data-id={assignment._id} type='checkbox' defaultChecked={assignment.active} onChange={assignmentActiveChanged} /></td>
+													<td><button data-id={assignment._id} type='button' className='btn btn-danger btn-xs' onClick={onDeleteAssignment}>X</button></td>
+												</tr>
+											);
+											//<td><DatePicker selected={moment(assignment.due)} onChange={assignmentDueChanged} /></td>
+										})
+									}
+								</tbody>
+							</table>
+							<button type='button' className='btn btn-success' onClick={onNewAssignment}>+</button>
+						</div>
+					</div>
+				</div>
+				</div>
 			</div>
 		);
 	},
 
 	getInitialState: function() {
 		return {
-			classes: []
+			classes: [],
+			assignments: []
 		};
 	},
 
 	componentDidMount: function() {
-		console.log('component mounted');
 		this.refreshClasses();
 	},
+
 
 	refreshClasses: function() {
 		$.ajax({
@@ -145,216 +203,67 @@ var TeacherDashboard = React.createClass({
 		}).fail(function(err) {
 			say.error(err);
 		}).done(function(data) {
-			this.classTableData.setData(data);
-		}.bind(this))
+			this.setState({classes: data});
+		}.bind(this));
 	},
 
-	onRowSelect: function(row, isSelected) {
-		this.selectedClassRow = isSelected ? row : null;
-		if(isSelected) {
-			this.refreshAssignments();
-			this.refreshStudents();
-		}
-		console.log(row, isSelected);
-	},
-
-	onRowEdited: function(row, cellName, cellValue) {
-		console.log(row, cellName, cellValue);
+	upsertClass: function(update) {
 		$.ajax({
 			url: '/teacher/upsertClass',
 			type: 'POST',
-			data: row
+			data: update
 		}).fail(function(err) {
 			say.error(err);
 		}).done(function(data) {
 			this.refreshClasses();
 		}.bind(this));
 	},
-
-	onCreateClick: function(event) {
-		console.log('Create row');
-		$.ajax({
-			url: '/teacher/upsertClass',
-			type: 'POST',
-			data: {name: 'New Class'}
-		}).fail(function(err) {
-			say.error(err);
-		}).done(function(data) {
-			this.refreshClasses();
-		}.bind(this));
-	},
-
-	onDeleteClick: function(event) {
-		console.log('Delete row', this.selectedClassRow);
-		if(this.selectedClassRow) {
-			$.ajax({
-				url: '/teacher/deleteClass/' + this.selectedClassRow._id,
-				type: 'POST'
-			}).fail(function(err) {
-				say.error(err);
-			}).done(function(data) {
-				this.refreshClasses();
-			}.bind(this));	
-		}
-	},
-
 
 	refreshAssignments: function() {
-		console.log('refresh assignments');
-		$.ajax({
-			url: '/teacher/getAssignments/' + this.selectedClassRow._id,
-			type: 'GET'
-		}).fail(function(err) {
-			say.error(err);
-		}).done(function(data) {
-			console.log('assignments', data);
-			this.assignmentTableData.setData(data);
-		}.bind(this));
+		if(this.selectedClassId) {
+			$.ajax({
+				url: '/teacher/getAssignments?classId=' + this.selectedClassId,
+				type: 'GET'
+			}).fail(function(err) {
+				say.error(err);
+			}).done(function(data) {
+				this.setState({assignments: data});
+			}.bind(this));
+		}
 	},
 
-	onAssignmentRowSelect: function(row, isSelected) {
-		this.selectedAssignmentRow = isSelected ? row : null;
-
-		console.log(row, isSelected);
-	},
-
-	onAssignmentCellEdited: function(row, cellName, cellValue) {
-		console.log(row, cellName, cellValue);
+	updateAssignments: function(update) {
 		$.ajax({
-			url: '/teacher/upsertAssignment/',
+			url: '/teacher/upsertAssignment',
 			type: 'POST',
-			data: row
+			data: update
 		}).fail(function(err) {
 			say.error(err);
 		}).done(function(data) {
 			this.refreshAssignments();
 		}.bind(this));
-	},
-
-	onCreateAssignmentClick: function(event) {
-		console.log('Create assignment');
-		$.ajax({
-			url: '/teacher/upsertAssignment/',
-			type: 'POST',
-			data: {title: 'New Assignment', description: '', active: false, due: '9999/12/31', class: this.selectedClassRow._id}
-		}).fail(function(err) {
-			say.error(err);
-		}).done(function(data) {
-			this.refreshAssignments();
-		}.bind(this));
-	},
-
-	onDeleteAssignmentClick: function(event) {
-		console.log('Delete row', this.selectedAssignmentRow);
-		if(this.selectedAssignmentRow) {
-			$.ajax({
-				url: '/teacher/deleteAssignment/' + this.selectedAssignmentRow._id,
-				type: 'POST'
-			}).fail(function(err) {
-				say.error(err);
-			}).done(function(data) {
-				this.refreshClasses();
-			}.bind(this));	
-		}
-	},
-
-	// students
-
-	refreshStudents: function() {
-		console.log('refresh Students');
-		$.ajax({
-			url: '/teacher/getStudents/' + this.selectedClassRow._id,
-			type: 'GET'
-		}).fail(function(err) {
-			say.error(err);
-		}).done(function(data) {
-			console.log('Students', data);
-			this.studentTableData.setData(data);
-		}.bind(this));
-	},
-
-	onStudentRowSelect: function(row, isSelected) {
-		this.selectedStudentRow = isSelected ? row : null;
-
-		console.log(row, isSelected);
-	},
-
-	onStudentCellEdited: function(row, cellName, cellValue) {
-		console.log(row, cellName, cellValue);
-		$.ajax({
-			url: '/teacher/upsertStudent/',
-			type: 'POST',
-			data: row
-		}).fail(function(err) {
-			say.error(err);
-		}).done(function(data) {
-			this.refreshStudents();
-		}.bind(this));
-	},
-
-	onCreateStudentClick: function(event) {
-		console.log('Create Student');
-		$.ajax({
-			url: '/teacher/upsertStudent/',
-			type: 'POST',
-			data: {name: 'New Student', username: '', enrolls: this.selectedClassRow._id}
-		}).fail(function(err) {
-			say.error(err);
-		}).done(function(data) {
-			this.refreshStudents();
-		}.bind(this));
-	},
-
-	onDeleteStudentClick: function(event) {
-		console.log('Delete row', this.selectedStudentRow);
-		if(this.selectedStudentRow) {
-			$.ajax({
-				url: '/teacher/deleteStudent/' + this.selectedStudentRow._id,
-				type: 'POST'
-			}).fail(function(err) {
-				say.error(err);
-			}).done(function(data) {
-				this.refreshClasses();
-			}.bind(this));	
-		}
-	},
+	}
 
 
 });
 
 
-
-
-
-var Header = React.createClass({
+var DateCell = React.createClass({
 	render: function() {
 		return (
 			<div>
-				<div className='row'>
-					<div className='col-md-8'>
-						<h1>{this.props.title}</h1>
-					</div>
-					<div className='col-md-2'>
-						{'Hi, ' + $.cookie('name')}
-					</div>
-					<div className='col-md-2'>
-						<button ref='logout' type='button' className='btn btn-default' onClick={this.logoutClicked}>Logout</button>
-					</div>
-				</div>
+				<DatePicker selected={moment(this.props.date)} onChange={this.datePickerChanged} />
 			</div>
 		);
 	},
 
-	logoutClicked: function(event) {
-		$.ajax({
-			url: '/user/logout',
-			type: 'POST'
-		}).fail(function(err) {
-			say.error(err);
-		}).done(function(data) {
-			window.location.href = data.redirect;
-		});
+	datePickerChanged: function(date) {
+		this.props.onChange(this.props._id, date.format());
 	}
+
 });
+
+
+
 
 module.exports = TeacherDashboard;

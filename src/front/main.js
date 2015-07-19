@@ -9,6 +9,7 @@ var components = {};
 components.LoginPage = require('./LoginPage');
 components.TeacherDashboard = require('./TeacherDashboard');
 components.StudentDashboard = require('./StudentDashboard');
+components.StudentManagement = require('./StudentManagement');
 
 
 // render React components
