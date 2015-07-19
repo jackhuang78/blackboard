@@ -6,7 +6,9 @@ var bootstrap = require('bootstrap');
 
 // require React components
 var components = {};
-components.login = require('./login');
+components.LoginPage = require('./LoginPage');
+components.TeacherDashboard = require('./TeacherDashboard');
+components.StudentDashboard = require('./StudentDashboard');
 
 
 // render React components
