@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/back/app.js",
   "scripts": {
-    "start": "node src/back/app.js",
+    "start": "browserify src/front/main.js -o build/bundle.js && node src/back/app.js",
     "watch": "supervisor -w 'src/back' -n exit src/back/app.js & watchify src/front/main.js -o build/bundle.js -v -d",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
