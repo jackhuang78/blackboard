@@ -53,5 +53,12 @@ app.use('/user', user.router);
 app.use('/teacher', teacher.router);
 app.use('/student', student.router);
 
-// run server 
-app.listen(5000);
+// run server
+var port = process.env.PORT | 5000; 
+app.listen(port, function(err) {
+	if(err) {
+		console.log('Failed to run server at port ' + port);
+	} else {
+		console.log('Server running on port ' + port);
+	}
+});
