@@ -108,11 +108,16 @@ var TeacherDashboard = React.createClass({
 		}.bind(this);
 
 		return (
-			<div>
-				<Header title='TeacherDashboard'/>
-				<div>
+			<div className='row'>
+				<div className='col-md-1' />
+				<div className='col-md-11'>
+					<Header title='Teacher Dashboard'/>
+					<ul className="nav nav-pills">
+						<li role="presentation" className="active"><a href="/teacher">Classes and Assignments</a></li>
+						<li role="presentation"><a href="/teacher/students">Student Management</a></li>
+					</ul>
+
 				<div className='row'>
-					<div className='col-md-1' />
 					<div className='col-md-2'>
 						<div className='form-group'>
 							<h2>Class</h2>
@@ -125,25 +130,22 @@ var TeacherDashboard = React.createClass({
 									</tr>
 								</thead>
 								<tbody> 
-									{
-										this.state.classes.map(function(cls) {
-											return (
-												<tr>
-													<td><input type='radio' name='selectedClass' value={cls._id} onChange={selectClass}></input></td>
-													<td data-id={cls._id} contentEditable={true} onBlur={nameChanged} >{cls.name}</td>
-													<td><button data-id={cls._id} type='button' className='btn btn-danger btn-xs' onClick={onDeleteClass}>X</button></td>
-												</tr>
-											);
-										})
-									}
+								{
+									this.state.classes.map(function(cls) {
+										return (
+											<tr>
+												<td><input type='radio' name='selectedClass' value={cls._id} onChange={selectClass}></input></td>
+												<td data-id={cls._id} contentEditable={true} onBlur={nameChanged} >{cls.name}</td>
+												<td><button data-id={cls._id} type='button' className='btn btn-danger btn-xs' onClick={onDeleteClass}>X</button></td>
+											</tr>
+										);
+									})
+								}
 								</tbody>
 							</table>
 							<button type='button' className='btn btn-success' onClick={onNewClass}>+</button>
-							
 						</div>
 					</div>
-
-
 					<div className='col-md-8'>
 						<div className='form-group'>
 							<h2>Assignments</h2>
@@ -158,27 +160,25 @@ var TeacherDashboard = React.createClass({
 									</tr>
 								</thead>
 								<tbody> 
-									{
-										this.state.assignments.map(function(assignment) {
-											
-											return (
-												<tr>
-													<td data-id={assignment._id} contentEditable={true} onBlur={titleChanged} >{assignment.title}</td>
-													<td data-id={assignment._id} contentEditable={true} onBlur={descChanged} >{assignment.description}</td>
-													<td><DateCell _id={assignment._id} date={assignment.due} onChange={assignmentDueChanged} /></td>	
-													<td><input data-id={assignment._id} type='checkbox' defaultChecked={assignment.active} onChange={assignmentActiveChanged} /></td>
-													<td><button data-id={assignment._id} type='button' className='btn btn-danger btn-xs' onClick={onDeleteAssignment}>X</button></td>
-												</tr>
-											);
-											//<td><DatePicker selected={moment(assignment.due)} onChange={assignmentDueChanged} /></td>
-										})
-									}
+								{
+									this.state.assignments.map(function(assignment) {
+										return (
+											<tr>
+												<td data-id={assignment._id} contentEditable={true} onBlur={titleChanged} >{assignment.title}</td>
+												<td data-id={assignment._id} contentEditable={true} onBlur={descChanged} >{assignment.description}</td>
+												<td><DateCell _id={assignment._id} date={assignment.due} onChange={assignmentDueChanged} /></td>	
+												<td><input data-id={assignment._id} type='checkbox' defaultChecked={assignment.active} onChange={assignmentActiveChanged} /></td>
+												<td><button data-id={assignment._id} type='button' className='btn btn-danger btn-xs' onClick={onDeleteAssignment}>X</button></td>
+											</tr>
+										);
+									})
+								}
 								</tbody>
 							</table>
 							<button type='button' className='btn btn-success' onClick={onNewAssignment}>+</button>
 						</div>
 					</div>
-				</div>
+				</div>	
 				</div>
 			</div>
 		);

@@ -4,8 +4,14 @@ var model = require('./model');
 
 var router = express.Router();
 
+router.use(function(req, res, next) {
+	if(req.cookies.user.role != 'teacher')
+		res.redirect('/user/login');
+	else
+		next();
+});
+
 router.get('/', function(req, res) {
-	
 	res.render('main', {react: 'TeacherDashboard'});
 });
 
@@ -130,7 +136,7 @@ router.post('/upsertStudent/', function(req, res) {
 		});
 	}
 
-	
+
 });
 
 router.post('/deleteStudent/:_id', function(req, res) {
