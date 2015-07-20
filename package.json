@@ -24,6 +24,7 @@
     "moment": "^2.10.3",
     "moment-range": "^2.0.3",
     "mongoose": "^4.0.7",
+    "react-bootstrap": "^0.23.7",
     "react-bootstrap-table": "^0.8.7",
     "react-datepicker": "^0.10.0",
     "react-input-calendar": "^0.1.11",

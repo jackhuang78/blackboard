@@ -10,6 +10,9 @@ var say = require('./say');
 
 var Header = require('./Header');
 
+var Modal = require('react-bootstrap').Modal;
+var Button = require('react-bootstrap').Button;
+
 
 
 
@@ -39,14 +42,7 @@ var TeacherDashboard = React.createClass({
 		}.bind(this);
 
 		var onDeleteClass = function(event) {
-			$.ajax({
-				url: '/teacher/deleteClass/' + event.target.dataset.id,
-				type: 'POST'
-			}).fail(function(err) {
-				say.error(err);
-			}).done(function(data) {
-				this.refreshClasses();
-			}.bind(this));
+			this.setState({showWarning: true, deleteType: 'class', deleteId: event.target.dataset.id});			
 		}.bind(this);
 
 		var selectAssignment = function(event) {
@@ -56,7 +52,7 @@ var TeacherDashboard = React.createClass({
 		var titleChanged = function(event) {
 			//console.log(event);
 			//console.log(event.target);
-			console.log(event.target.dataset.id, event.target.value, event.target.innerText)
+			//console.log(event.target.dataset.id, event.target.value, event.target.innerText)
 			//if(event.charCode == 13 && !event.shiftKey) {
 				this.updateAssignments({
 					_id: event.target.dataset.id,
@@ -97,14 +93,39 @@ var TeacherDashboard = React.createClass({
 		}.bind(this);
 
 		var onDeleteAssignment = function(event) {
-			$.ajax({
-				url: '/teacher/deleteAssignment/' + event.target.dataset.id,
-				type: 'POST'
-			}).fail(function(err) {
-				say.error(err);
-			}).done(function(data) {
-				this.refreshAssignments();
-			}.bind(this));
+			this.setState({showWarning: true, deleteType: 'assignment', deleteId: event.target.dataset.id});			
+		}.bind(this);
+
+		var onConfirmedDelete = function() {
+			if(this.state.deleteType === 'assignment') {
+				$.ajax({
+					url: '/teacher/deleteAssignment/' + this.state.deleteId,
+					type: 'POST'
+				}).fail(function(err) {
+					say.error(err);
+				}).done(function(data) {
+					this.refreshAssignments();
+				}.bind(this));
+			} else {
+				$.ajax({
+					url: '/teacher/deleteClass/' + this.state.deleteId,
+					type: 'POST'
+				}).fail(function(err) {
+					say.error(err);
+				}).done(function(data) {
+					this.refreshClasses();
+				}.bind(this));
+			}
+			this.setState({showWarning: false});
+		}.bind(this);
+
+		var onCloseWarning = function() {
+			console.log('close');
+			this.setState({showWarning: false});
+		}.bind(this);
+
+		var onShowWarning = function() {
+			this.setState({showWarning: true});
 		}.bind(this);
 
 		return (
@@ -117,68 +138,82 @@ var TeacherDashboard = React.createClass({
 						<li role="presentation"><a href="/teacher/students">Student Management</a></li>
 					</ul>
 
-				<div className='row'>
-					<div className='col-md-2'>
-						<div className='form-group'>
-							<h2>Class</h2>
-							<table className='table table-hover table-striped table-condensed'>
-								<thead>
-									<tr>
-										<th></th>
-										<th></th>
-										<th></th>
-									</tr>
-								</thead>
-								<tbody> 
-								{
-									this.state.classes.map(function(cls) {
-										return (
-											<tr>
-												<td><input type='radio' name='selectedClass' value={cls._id} onChange={selectClass}></input></td>
-												<td data-id={cls._id} contentEditable={true} onBlur={nameChanged} >{cls.name}</td>
-												<td><button data-id={cls._id} type='button' className='btn btn-danger btn-xs' onClick={onDeleteClass}>X</button></td>
-											</tr>
-										);
-									})
-								}
-								</tbody>
-							</table>
-							<button type='button' className='btn btn-success' onClick={onNewClass}>+</button>
+
+				<Modal show={this.state.showWarning} onHide={onCloseWarning}>
+          <Modal.Header closeButton>
+            <Modal.Title>Modal heading</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p>Are you sure to delete this {this.state.deleteType}?</p>
+          </Modal.Body>
+          <Modal.Footer>
+          	<Button bsStyle='danger' onClick={onConfirmedDelete}>Confirm</Button>
+            <Button onClick={onCloseWarning}>Cancel</Button>
+          </Modal.Footer>
+        </Modal>
+
+					<div className='row'>
+						<div className='col-md-2'>
+							<div className='form-group'>
+								<h2>Class</h2>
+								<table className='table table-hover table-striped table-condensed'>
+									<thead>
+										<tr>
+											<th></th>
+											<th></th>
+											<th></th>
+										</tr>
+									</thead>
+									<tbody> 
+									{
+										this.state.classes.map(function(cls) {
+											return (
+												<tr>
+													<td><input type='radio' name='selectedClass' value={cls._id} onChange={selectClass}></input></td>
+													<td data-id={cls._id} contentEditable={true} onBlur={nameChanged} >{cls.name}</td>
+													<td><button data-id={cls._id} type='button' className='btn btn-danger btn-xs' onClick={onDeleteClass}>X</button></td>
+												</tr>
+											);
+										})
+									}
+									</tbody>
+								</table>
+								<button type='button' className='btn btn-success' onClick={onNewClass}>+</button>
+							</div>
 						</div>
-					</div>
-					<div className='col-md-8'>
-						<div className='form-group'>
-							<h2>Assignments</h2>
-							<table className='table table-hover table-striped table-condensed'>
-								<thead>
-									<tr>
-										<th>Title</th>
-										<th>Description</th>
-										<th>Due</th>
-										<th>Active</th>
-										<th></th>
-									</tr>
-								</thead>
-								<tbody> 
-								{
-									this.state.assignments.map(function(assignment) {
-										return (
-											<tr>
-												<td data-id={assignment._id} contentEditable={true} onBlur={titleChanged} >{assignment.title}</td>
-												<td data-id={assignment._id} contentEditable={true} onBlur={descChanged} >{assignment.description}</td>
-												<td><DateCell _id={assignment._id} date={assignment.due} onChange={assignmentDueChanged} /></td>	
-												<td><input data-id={assignment._id} type='checkbox' defaultChecked={assignment.active} onChange={assignmentActiveChanged} /></td>
-												<td><button data-id={assignment._id} type='button' className='btn btn-danger btn-xs' onClick={onDeleteAssignment}>X</button></td>
-											</tr>
-										);
-									})
-								}
-								</tbody>
-							</table>
-							<button type='button' className='btn btn-success' onClick={onNewAssignment}>+</button>
+						<div className='col-md-8'>
+							<div className='form-group'>
+								<h2>Assignments</h2>
+								<table className='table table-hover table-striped table-condensed'>
+									<thead>
+										<tr>
+											<th>Title</th>
+											<th>Description</th>
+											<th>Due</th>
+											<th>Active</th>
+											<th></th>
+										</tr>
+									</thead>
+									<tbody> 
+									{
+										this.state.assignments.map(function(assignment) {
+											return (
+												<tr>
+													<td data-id={assignment._id} contentEditable={true} onBlur={titleChanged} >{assignment.title}</td>
+													<td data-id={assignment._id} contentEditable={true} onBlur={descChanged} >{assignment.description}</td>
+													<td><DateCell _id={assignment._id} date={assignment.due} onChange={assignmentDueChanged} /></td>	
+													<td><input data-id={assignment._id} type='checkbox' defaultChecked={assignment.active} onChange={assignmentActiveChanged} /></td>
+													<td><button data-id={assignment._id} type='button' className='btn btn-danger btn-xs' onClick={onDeleteAssignment}>X</button></td>
+												</tr>
+											);
+										})
+									}
+									</tbody>
+								</table>
+								<button type='button' className='btn btn-success' onClick={onNewAssignment}>+</button>
+							</div>
 						</div>
-					</div>
-				</div>	
+					</div>	
 				</div>
 			</div>
 		);
@@ -187,7 +222,8 @@ var TeacherDashboard = React.createClass({
 	getInitialState: function() {
 		return {
 			classes: [],
-			assignments: []
+			assignments: [],
+			showWarning: false
 		};
 	},
 
@@ -233,15 +269,17 @@ var TeacherDashboard = React.createClass({
 	},
 
 	updateAssignments: function(update) {
-		$.ajax({
-			url: '/teacher/upsertAssignment',
-			type: 'POST',
-			data: update
-		}).fail(function(err) {
-			say.error(err);
-		}).done(function(data) {
-			this.refreshAssignments();
-		}.bind(this));
+		if(this.selectClassId) {
+			$.ajax({
+				url: '/teacher/upsertAssignment',
+				type: 'POST',
+				data: update
+			}).fail(function(err) {
+				say.error(err);
+			}).done(function(data) {
+				this.refreshAssignments();
+			}.bind(this));
+		}
 	}
 
 
