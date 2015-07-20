@@ -4,6 +4,7 @@ var mongoose = require('mongoose');
 
 // connect to MongoDB
 var url = process.env.MONGOLAB_URI || 'mongodb://localhost/blackboard';
+console.log('mongodb url:', url);
 mongoose.connect(url);
 
 var Schema = mongoose.Schema;
