@@ -3,7 +3,7 @@ var mongoose = require('mongoose');
 
 
 // connect to MongoDB
-var url = process.env.MONGOLAB_URI || 'mongodb://localhost/blackboard';
+var url = process.env.MONGOLAB_URI + '/blackboard' || 'mongodb://localhost/blackboard';
 console.log('mongodb url:', url);
 mongoose.connect(url);
 
