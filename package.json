@@ -2,7 +2,7 @@
   "name": "blackboard",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "src/back/app.js",
   "scripts": {
     "watch": "supervisor -w 'src/back' -n exit src/back/app.js & watchify src/front/main.js -o build/bundle.js -v -d",
     "test": "echo \"Error: no test specified\" && exit 1"
