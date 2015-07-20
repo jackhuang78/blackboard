@@ -119,22 +119,41 @@ router.get('/getStudents', function(req, res) {
 
 router.post('/upsertStudent/', function(req, res) {
 
-	if(req.body._id) {
-		model.User.findByIdAndUpdate(req.body._id, req.body, {upsert: true}).then(function(data) {
-			console.log('update', data);
-			return res.json(data);
-		}, function(err) {
-			return res.status(500).json(err);
-		});
-	} else {
-		req.body.role = 'student'
-		model.User.create(req.body).then(function(data) {
-			console.log('create', data);
-			return res.json(data);
-		}, function(err) {
-			return res.status(500).json(err);
-		});
-	}
+	model.User.findOne({username: req.body.username}).then(function(user) {
+		if(user && user._id != req.body._id)
+			return res.status(401).send('Username already taken by another student.');
+
+		if(req.body.username === '') 
+			return res.status(401).send('Username cannot be blank.');
+
+		if(req.body.password === '')
+			return res.status(401).send('Password cannot be blank.');			
+
+
+		if(req.body._id) {
+			model.User.findByIdAndUpdate(req.body._id, req.body, {upsert: true}).then(function(data) {
+				console.log('update', data);
+				return res.json(data);
+			}, function(err) {
+				return res.status(500).json(err);
+			});
+		} else {
+			req.body.role = 'student'
+			model.User.create(req.body).then(function(data) {
+				console.log('create', data);
+				return res.json(data);
+			}, function(err) {
+				return res.status(500).json(err);
+			});
+		}
+
+
+	}, function(err) {
+		return res.status(500).json(err);
+	});
+
+
+	
 
 
 });

@@ -8,7 +8,13 @@ var Modal = require('react-bootstrap').Modal;
 var Button = require('react-bootstrap').Button;
 
 var StudentManagement = React.createClass({
+
+	newStudent: {},
+
 	render: function() {
+		if(this.state.classes[0])
+			this.newStudent.enrolls = this.state.classes[0]._id;	// TODO handle case with no class
+
 		return (
 			<div className='row'>
 				<div className='col-md-1' />
@@ -48,20 +54,21 @@ var StudentManagement = React.createClass({
 									this.state.students.map(function(student) {
 										return (
 											<tr>
-												<td data-id={student._id} contentEditable={true} onBlur={this.onEditName} >{student.name}</td>
-												<td data-id={student._id} contentEditable={true} onBlur={this.onEditUsername} >{student.username}</td>
+												<td data-id={student._id} contentEditable={true} onKeyPress={this.preventEnter} onBlur={this.onEditName} >{student.name}</td>
+												<td data-id={student._id} contentEditable={true} onKeyPress={this.preventEnter} onBlur={this.onEditUsername} >{student.username}</td>
 												<td key={Date.now()} data-id={student._id} contentEditable={true} onBlur={this.onEditPassword} >********</td>
 												<td><select data-id={student._id} class='form-control' onChange={this.onChangeClass} value={student.enrolls}> 
 												{
 													this.state.classes.map(function(cls) {
-														// if(student.enrolls === cls._id)
-														// 	return (<option selected>{cls.name}</option>);	
-														// else
 															return (<option value={cls._id}>{cls.name}</option>);
 													}.bind(this))
 												}
 												</select></td>
-												<td><button data-id={student._id} type='button' className='btn btn-danger btn-xs' onClick={this.onDeleteStudent}>X</button></td>
+												{
+													(student._id) 
+														? (<td><button data-id={student._id} type='button' className='btn btn-danger btn-xs' onClick={this.onDeleteStudent}>X</button></td>)
+														: (<td><button type='button' className='btn btn-success btn-xs' onClick={this.onConfirmAddStudent}>+</button></td>)
+												}
 											</tr>
 										);
 										
@@ -69,7 +76,6 @@ var StudentManagement = React.createClass({
 								}
 							</tbody>
 						</table>
-						<button type='button' className='btn btn-success' onClick={this.onAddStudent}>+</button>
 					</div>
 				</div>
 			</div>
@@ -78,7 +84,8 @@ var StudentManagement = React.createClass({
 
 	getInitialState: function() {
 		return {
-			students: [],
+			students: [{}],
+			classes: [],
 			showWarning: false
 		};
 	},
@@ -87,6 +94,8 @@ var StudentManagement = React.createClass({
 		this.refreshStudents();
 		this.refreshClasses();
 	},
+
+
 
 	refreshClasses: function() {
 		console.log('refreshClasses');
@@ -108,18 +117,40 @@ var StudentManagement = React.createClass({
 		}).fail(function(err) {
 			say.error(err);
 		}).done(function(data) {
+			data.push({});
 			this.setState({students: data});
 		}.bind(this));
 	},
 
+	preventEnter: function(event) {
+		if(event.charCode == 13 && !event.shiftKey) {
+			event.preventDefault();
+			event.target.blur();
+		}
+	},
+
 	onAddStudent: function(event) {
 		console.log('add student');
+		var students = this.state.students.map(function(student) {
+			return student;
+		});
+		students.push({});
+		this.setState({students: students});
+
+	},
+
+
+	onConfirmAddStudent: function(event) {
+		console.log('confirm add student');
+
 		$.ajax({
 			url: '/teacher/upsertStudent',
 			type: 'POST',
 			data: {
-				name: 'New Student',
-				enrolls: this.state.classes[0]._id
+				name: this.newStudent.name,
+				username: this.newStudent.username,
+				password: this.newStudent.password,
+				enrolls: this.newStudent.enrolls
 			}
 		}).fail(function(err) {
 			say.error(err);
@@ -151,6 +182,12 @@ var StudentManagement = React.createClass({
 
 	onEditName: function(event) {
 		console.log('edit name');
+
+		if(!event.target.dataset.id) {
+			this.newStudent.name = event.target.innerText;
+			return;
+		}
+
 		$.ajax({
 			url: '/teacher/upsertStudent',
 			type: 'POST',
@@ -167,6 +204,12 @@ var StudentManagement = React.createClass({
 
 	onEditUsername: function(event) {
 		console.log('edit name');
+
+		if(!event.target.dataset.id) {
+			this.newStudent.username = event.target.innerText;
+			return;
+		}
+
 		$.ajax({
 			url: '/teacher/upsertStudent',
 			type: 'POST',
@@ -183,6 +226,12 @@ var StudentManagement = React.createClass({
 
 	onEditPassword: function(event) {
 		console.log('edit name');
+
+		if(!event.target.dataset.id) {
+			this.newStudent.password = event.target.innerText;
+			return;
+		}
+
 		$.ajax({
 			url: '/teacher/upsertStudent',
 			type: 'POST',
@@ -199,8 +248,12 @@ var StudentManagement = React.createClass({
 
 	onChangeClass: function(event) {
 		console.log('change class');
-		// console.log(event);
-		// console.log(event.target.value);
+		
+		if(!event.target.dataset.id) {
+			this.newStudent.enrolls = event.target.value;
+			return;
+		}
+
 		$.ajax({
 			url: '/teacher/upsertStudent',
 			type: 'POST',

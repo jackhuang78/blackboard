@@ -50,24 +50,26 @@ var TeacherDashboard = React.createClass({
 		}.bind(this);
 
 		var titleChanged = function(event) {
-			//console.log(event);
-			//console.log(event.target);
-			//console.log(event.target.dataset.id, event.target.value, event.target.innerText)
-			//if(event.charCode == 13 && !event.shiftKey) {
+			console.log(event.charCode, event.charCode === undefined);
+			if(event.charCode === undefined || (event.charCode == 13 && !event.shiftKey)) {
+				event.preventDefault();
 				this.updateAssignments({
 					_id: event.target.dataset.id,
 					title: event.target.innerText
 				});
-			//}
+				event.target.blur();
+			}
 		}.bind(this);
 
 		var descChanged = function(event) {
-			//if(event.charCode == 13 && !event.shiftKey) {
+			if(event.charCode === undefined || (event.charCode == 13 && !event.shiftKey)) {
+				event.preventDefault();
 				this.updateAssignments({
 					_id: event.target.dataset.id,
 					description: event.target.innerText
 				});
-			//}
+				event.target.blur();
+			}
 		}.bind(this);
 
 		var assignmentDueChanged = function(_id, date) {
@@ -199,14 +201,14 @@ var TeacherDashboard = React.createClass({
 										this.state.assignments.map(function(assignment) {
 											return (
 												<tr>
-													<td data-id={assignment._id} contentEditable={true} onBlur={titleChanged} >{assignment.title}</td>
-													<td data-id={assignment._id} contentEditable={true} onBlur={descChanged} >{assignment.description}</td>
+													<td data-id={assignment._id} contentEditable={true} onKeyPress={titleChanged} onBlur={titleChanged} >{assignment.title}</td>
+													<td data-id={assignment._id} contentEditable={true} onKeyPress={descChanged} onBlur={descChanged} >{assignment.description}</td>
 													<td><DateCell _id={assignment._id} date={assignment.due} onChange={assignmentDueChanged} /></td>	
 													<td><input data-id={assignment._id} type='checkbox' defaultChecked={assignment.active} onChange={assignmentActiveChanged} /></td>
 													<td><button data-id={assignment._id} type='button' className='btn btn-danger btn-xs' onClick={onDeleteAssignment}>X</button></td>
 												</tr>
 											);
-										})
+										}.bind(this))
 									}
 									</tbody>
 								</table>
@@ -218,6 +220,8 @@ var TeacherDashboard = React.createClass({
 			</div>
 		);
 	},
+
+
 
 	getInitialState: function() {
 		return {
@@ -269,17 +273,19 @@ var TeacherDashboard = React.createClass({
 	},
 
 	updateAssignments: function(update) {
-		if(this.selectClassId) {
-			$.ajax({
-				url: '/teacher/upsertAssignment',
-				type: 'POST',
-				data: update
-			}).fail(function(err) {
-				say.error(err);
-			}).done(function(data) {
-				this.refreshAssignments();
-			}.bind(this));
-		}
+		console.log('update assignments');
+		console.log(update);
+		//if(this.selectClassId) {
+		$.ajax({
+			url: '/teacher/upsertAssignment',
+			type: 'POST',
+			data: update
+		}).fail(function(err) {
+			say.error(err);
+		}).done(function(data) {
+			this.refreshAssignments();
+		}.bind(this));
+	//	}
 	}
 
 
