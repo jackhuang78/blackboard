@@ -42,10 +42,10 @@ app.use(function(req, res, next) {
 	});
 });
 
-// //main page
-// app.get('/', function(req, res) {
-// 	res.redirect('/user/login');
-// });
+//main page
+app.get('/', function(req, res) {
+	res.redirect('/user/login');
+});
 
 
 
