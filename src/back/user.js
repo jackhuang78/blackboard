@@ -24,7 +24,7 @@ router.get('/login', function(req, res) {
 	//console.log(req.cookies);
 
 	getUser(req.cookies.session).then(function(user) {
-
+		console.log('login as user ', user);
 	//User.findOne({session: req.cookies.session}).then(function(user) {
 		if(user) {
 			res.cookie('name', user.name);
@@ -38,6 +38,7 @@ router.get('/login', function(req, res) {
 		}
 		return res.render('main', {react: 'LoginPage'});
 	}).catch(function(err) {
+		console.log('Error', err);
 		return res.status(500).json(err);
 	});
 });
