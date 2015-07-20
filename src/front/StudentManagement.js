@@ -56,7 +56,7 @@ var StudentManagement = React.createClass({
 											<tr>
 												<td data-id={student._id} contentEditable={true} onKeyPress={this.preventEnter} onBlur={this.onEditName} >{student.name}</td>
 												<td data-id={student._id} contentEditable={true} onKeyPress={this.preventEnter} onBlur={this.onEditUsername} >{student.username}</td>
-												<td key={Date.now()} data-id={student._id} contentEditable={true} onBlur={this.onEditPassword} >********</td>
+												<td key={Date.now()} data-id={student._id} contentEditable={true} onBlur={this.onEditPassword} >{(student._id) ? '********' : ''}</td>
 												<td><select data-id={student._id} class='form-control' onChange={this.onChangeClass} value={student.enrolls}> 
 												{
 													this.state.classes.map(function(cls) {
@@ -66,7 +66,7 @@ var StudentManagement = React.createClass({
 												</select></td>
 												{
 													(student._id) 
-														? (<td><button data-id={student._id} type='button' className='btn btn-danger btn-xs' onClick={this.onDeleteStudent}>X</button></td>)
+														? (<td><button data-id={student._id} type='button' className='btn btn-danger btn-xs' onClick={this.onDeleteStudent}>x</button></td>)
 														: (<td><button type='button' className='btn btn-success btn-xs' onClick={this.onConfirmAddStudent}>+</button></td>)
 												}
 											</tr>
@@ -146,12 +146,7 @@ var StudentManagement = React.createClass({
 		$.ajax({
 			url: '/teacher/upsertStudent',
 			type: 'POST',
-			data: {
-				name: this.newStudent.name,
-				username: this.newStudent.username,
-				password: this.newStudent.password,
-				enrolls: this.newStudent.enrolls
-			}
+			data: this.newStudent
 		}).fail(function(err) {
 			say.error(err);
 		}).done(function(data) {

@@ -19,9 +19,10 @@ var Button = require('react-bootstrap').Button;
 var TeacherDashboard = React.createClass({
 	selectedClassId: null,
 	selectedAssignId: null,
+	newClass: {},
+	newAssignment: {},
 
 	render: function() {
-			
 
 		var selectClass = function(event) {
 			this.selectedClassId = event.target.value;
@@ -29,6 +30,11 @@ var TeacherDashboard = React.createClass({
 		}.bind(this);
 
 		var nameChanged = function(event) {
+			if(!event.target.dataset.id) {
+				this.newClass.name = event.target.innerText;
+				return;
+			}
+
 			this.upsertClass({
 				_id: event.target.dataset.id,
 				name: event.target.innerText
@@ -36,9 +42,7 @@ var TeacherDashboard = React.createClass({
 		}.bind(this);
 
 		var onNewClass = function(event) {
-			this.upsertClass({
-				name: 'New Class'
-			});
+			this.upsertClass(this.newClass);
 		}.bind(this);
 
 		var onDeleteClass = function(event) {
@@ -50,7 +54,11 @@ var TeacherDashboard = React.createClass({
 		}.bind(this);
 
 		var titleChanged = function(event) {
-			console.log(event.charCode, event.charCode === undefined);
+			if(!event.target.dataset.id) {
+				this.newAssignment.title = event.target.innerText;
+				return;
+			}
+
 			if(event.charCode === undefined || (event.charCode == 13 && !event.shiftKey)) {
 				event.preventDefault();
 				this.updateAssignments({
@@ -62,6 +70,11 @@ var TeacherDashboard = React.createClass({
 		}.bind(this);
 
 		var descChanged = function(event) {
+			if(!event.target.dataset.id) {
+				this.newAssignment.description = event.target.innerText;
+				return;
+			}
+
 			if(event.charCode === undefined || (event.charCode == 13 && !event.shiftKey)) {
 				event.preventDefault();
 				this.updateAssignments({
@@ -73,6 +86,11 @@ var TeacherDashboard = React.createClass({
 		}.bind(this);
 
 		var assignmentDueChanged = function(_id, date) {
+			if(!event.target.dataset.id) {
+				this.newAssignment.due = date;
+				return;
+			}
+
 			this.updateAssignments({
 				_id: _id,
 				due: date
@@ -80,6 +98,11 @@ var TeacherDashboard = React.createClass({
 		}.bind(this);
 
 		var assignmentActiveChanged = function(event) {
+			if(!event.target.dataset.id) {
+				this.newAssignment.active = event.target.checked;
+				return;
+			}
+
 			this.updateAssignments({
 				_id: event.target.dataset.id,
 				active: event.target.checked
@@ -87,11 +110,12 @@ var TeacherDashboard = React.createClass({
 		}.bind(this);
 
 		var onNewAssignment = function(event) {
-			this.updateAssignments({
-				title: 'New Assignment',
-				class: this.selectedClassId,
-				due: moment().format()
-			});
+			// this.updateAssignments({
+			// 	title: 'New Assignment',
+			// 	class: this.selectedClassId,
+			// 	due: moment().format()
+			// });
+			this.updateAssignments(this.newAssignment)
 		}.bind(this);
 
 		var onDeleteAssignment = function(event) {
@@ -129,6 +153,10 @@ var TeacherDashboard = React.createClass({
 		var onShowWarning = function() {
 			this.setState({showWarning: true});
 		}.bind(this);
+
+
+		this.newAssignment.class = this.selectedClassId;
+		console.log('classId', this.selectedClassId);
 
 		return (
 			<div className='row'>
@@ -171,16 +199,23 @@ var TeacherDashboard = React.createClass({
 										this.state.classes.map(function(cls) {
 											return (
 												<tr>
-													<td><input type='radio' name='selectedClass' value={cls._id} onChange={selectClass}></input></td>
+													{
+														(cls._id) 
+														?	(<td><input type='radio' name='selectedClass' value={cls._id} onChange={selectClass}></input></td>)
+														: (<td></td>)
+													}
 													<td data-id={cls._id} contentEditable={true} onBlur={nameChanged} >{cls.name}</td>
-													<td><button data-id={cls._id} type='button' className='btn btn-danger btn-xs' onClick={onDeleteClass}>X</button></td>
+													{
+														(cls._id) 
+															? (<td><button data-id={cls._id} type='button' className='btn btn-danger btn-xs' onClick={onDeleteClass}>x</button></td>)
+															: (<td><button type='button' className='btn btn-success btn-xs' onClick={onNewClass}>+</button></td>)
+													}
 												</tr>
 											);
 										})
 									}
 									</tbody>
 								</table>
-								<button type='button' className='btn btn-success' onClick={onNewClass}>+</button>
 							</div>
 						</div>
 						<div className='col-md-8'>
@@ -205,14 +240,17 @@ var TeacherDashboard = React.createClass({
 													<td data-id={assignment._id} contentEditable={true} onKeyPress={descChanged} onBlur={descChanged} >{assignment.description}</td>
 													<td><DateCell _id={assignment._id} date={assignment.due} onChange={assignmentDueChanged} /></td>	
 													<td><input data-id={assignment._id} type='checkbox' defaultChecked={assignment.active} onChange={assignmentActiveChanged} /></td>
-													<td><button data-id={assignment._id} type='button' className='btn btn-danger btn-xs' onClick={onDeleteAssignment}>X</button></td>
+													{
+														(assignment._id) 
+															? (<td><button data-id={assignment._id} type='button' className='btn btn-danger btn-xs' onClick={this.onDeleteAssignment}>x</button></td>)
+															: (<td><button type='button' className='btn btn-success btn-xs' onClick={onNewAssignment}>+</button></td>)
+													}
 												</tr>
 											);
 										}.bind(this))
 									}
 									</tbody>
 								</table>
-								<button type='button' className='btn btn-success' onClick={onNewAssignment}>+</button>
 							</div>
 						</div>
 					</div>	
@@ -243,6 +281,7 @@ var TeacherDashboard = React.createClass({
 		}).fail(function(err) {
 			say.error(err);
 		}).done(function(data) {
+			data.push({});
 			this.setState({classes: data});
 		}.bind(this));
 	},
@@ -267,6 +306,7 @@ var TeacherDashboard = React.createClass({
 			}).fail(function(err) {
 				say.error(err);
 			}).done(function(data) {
+				data.push({});
 				this.setState({assignments: data});
 			}.bind(this));
 		}
