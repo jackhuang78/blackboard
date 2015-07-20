@@ -3,7 +3,8 @@ var mongoose = require('mongoose');
 
 
 // connect to MongoDB
-mongoose.connect('mongodb://localhost/blackboard');
+var url = process.env.MONGOLAB_URI || 'mongodb://localhost/blackboard';
+mongoose.connect(url);
 
 var Schema = mongoose.Schema;
 var userSchema = new Schema({
